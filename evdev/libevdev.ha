@@ -15,6 +15,12 @@ export fn get_name(dev: libevdev) const str = {
 	return strings::fromc(c_libevdev_get_name(dev));
 };
 
+export fn set_name(dev: libevdev, name: str) void = {
+	const cstr = strings::to_c(name);
+	defer free(cstr);
+	c_libevdev_set_name(dev, cstr);
+};
+
 export fn next_event(dev: libevdev, flags: uint) (rt::errno | input_event) = {
 	let ev = input_event { ... };
 	const r = c_libevdev_next_event(dev, flags, &ev);
@@ -24,6 +30,26 @@ export fn next_event(dev: libevdev, flags: uint) (rt::errno | input_event) = {
 	return ev;
 };
 
+export fn enable_event_type(dev: libevdev, event_type: uint) (void | unknown_error) = {
+	return if (c_libevdev_enable_event_type(dev, event_type) != 0) unknown_error else void;
+};
+
+export fn enable_event_code(dev: libevdev, event_type: uint, code: uint,
+		data: nullable *void) (void | unknown_error) = {
+	// TODO: wrap data with tagged union?
+	return if (c_libevdev_enable_event_code(dev, event_type, code, data) != 0)
+		unknown_error else void;
+};
+
+export @symbol("libevdev_new") fn new() libevdev;
+export @symbol("libevdev_free") fn destroy(dev: libevdev) void;
+
 @symbol("libevdev_new_from_fd") fn c_libevdev_new_from_fd(fd: int, dev: *libevdev) int;
 @symbol("libevdev_get_name") fn c_libevdev_get_name(dev: libevdev) *const char;
-@symbol("libevdev_next_event") fn c_libevdev_next_event(dev: libevdev, flags: uint, ev: *input_event) int;
+@symbol("libevdev_set_name") fn c_libevdev_set_name(dev: libevdev, name: *const char) void;
+@symbol("libevdev_next_event") fn c_libevdev_next_event(dev: libevdev,
+	flags: uint, ev: *input_event) int;
+@symbol("libevdev_enable_event_type") fn c_libevdev_enable_event_type(
+	dev: libevdev, etype: uint) int;
+@symbol("libevdev_enable_event_code") fn c_libevdev_enable_event_code(
+	dev: libevdev, etype: uint, code: uint, data: nullable *void) int;

@@ -9,4 +9,6 @@ export type input_event = struct {
 	value:	i32,
 };
 
+export type unknown_error = !void;
+
 export def READ_FLAG_NORMAL: uint	= 2;

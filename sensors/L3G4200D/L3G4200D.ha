@@ -19,11 +19,13 @@ export fn new(bus: int) (L3G4200D | fs::error | rt::errno) = {
 export fn init(sensor: L3G4200D) (void | rt::errno) = {
 	i2c::smbus::write_byte_data(sensor.file, REG_CTRL_REG1,
 		CTRL_REG1_PD | CTRL_REG1_Zen | CTRL_REG1_Yen | CTRL_REG1_Xen)?;
+	i2c::smbus::write_byte_data(sensor.file, REG_CTRL_REG4, CTRL_REG4_BDU)?;
 };
 
 fn read_data(sensor: L3G4200D, reg: u8) (f64 | rt::errno) = {
-	const raw = i2c::smbus::read_word_data(sensor.file, reg)?;
-	const raw = raw: i16;
+	const raw = i2c::smbus::read_byte_data(sensor.file, reg)?;
+	const raw2 = i2c::smbus::read_byte_data(sensor.file, reg + 1)?;
+	const raw = (raw: u16 + (raw2: u16 << 8)): i16;
 	return raw: f64 * FS_250DPS_So;
 };
 

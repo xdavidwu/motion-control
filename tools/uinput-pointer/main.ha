@@ -16,17 +16,17 @@ export fn main() void = {
 	evdev::enable_event_code(evdev, evdev::EV_KEY, evdev::BTN_MIDDLE, null)!;
 	evdev::enable_event_code(evdev, evdev::EV_KEY, evdev::BTN_RIGHT, null)!;
 
-	const uinput = match (evdev::uinput::create_from_device(evdev, evdev::uinput::OPEN_MANAGED)) {
-	case let uinput: evdev::uinput::uinput =>
+	const uinput = match (uinput::create_from_device(evdev, uinput::OPEN_MANAGED)) {
+	case let uinput: uinput::uinput =>
 		yield uinput;
 	case let err: rt::errno =>
 		fmt::fatalf("Failed to create uinput dev: {}", rt::strerror(err));
 	};
-	defer evdev::uinput::destroy(uinput);
+	defer uinput::destroy(uinput);
 
 	for (let i = 0; i < 100; i += 1) {
-		evdev::uinput::write_event(uinput, evdev::EV_REL, evdev::REL_X, 1)!;
-		evdev::uinput::write_event(uinput, evdev::EV_SYN, evdev::SYN_REPORT, 0)!;
+		uinput::write_event(uinput, evdev::EV_REL, evdev::REL_X, 1)!;
+		uinput::write_event(uinput, evdev::EV_SYN, evdev::SYN_REPORT, 0)!;
 		time::sleep(10 * time::MILLISECOND);
 	};
 };

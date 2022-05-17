@@ -1,9 +1,11 @@
+use ahrs::integration;
 use fmt;
 use fs;
 use io;
 use os;
 use rt;
 use linux::timerfd;
+use math;
 use sensors::ADXL345;
 use sensors::L3G4200D;
 use strconv;
@@ -54,13 +56,23 @@ export fn main() void = {
 	defer io::close(fd)!;
 	timerfd::set(fd, (500 * time::MILLISECOND): timerfd::interval, 0)!;
 	signal::handle(signal::SIGINT, &sigint);
+	const integrator = integration::new();
 
 	for (!exit) {
 		timerfd::read(fd)!;
 		const acc_readings = ADXL345::read(ADXL345)!;
 		const gyro_readings = L3G4200D::read(L3G4200D)!;
+		let rps = (gyro_readings.0 / 180.0 * math::PI,
+			gyro_readings.1 / 180.0 * math::PI,
+			gyro_readings.2 / 180.0 * math::PI);
+		integration::update(integrator, rps, 0.5);
+		let attitude = integration::read_euler(integrator);
 
 		fmt::printfln("Accelerometer: {} {} {} g", acc_readings.0, acc_readings.1, acc_readings.2)!;
 		fmt::printfln("Gyroscope: {} {} {} dps", gyro_readings.0, gyro_readings.1, gyro_readings.2)!;
+		fmt::printfln("Attitude: {} {} {} deg",
+			attitude.0 / math::PI * 180.0,
+			attitude.1 / math::PI * 180.0,
+			attitude.2 / math::PI * 180.0)!;
 	};
 };

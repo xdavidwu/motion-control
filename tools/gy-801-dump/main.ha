@@ -1,10 +1,20 @@
 use fmt;
 use fs;
+use io;
 use os;
 use rt;
+use linux::timerfd;
 use sensors::ADXL345;
 use sensors::L3G4200D;
 use strconv;
+use time;
+use unix::signal;
+
+let exit: bool	= false;
+
+fn sigint(sig: int, info: *signal::siginfo, ucontext: *void) void = {
+	exit = true;
+};
 
 export fn main() void = {
 	if (len(os::args) != 2) {
@@ -40,9 +50,17 @@ export fn main() void = {
 	ADXL345::init(ADXL345)!;
 	L3G4200D::init(L3G4200D)!;
 
-	const acc_readings = ADXL345::read(ADXL345)!;
-	const gyro_readings = L3G4200D::read(L3G4200D)!;
+	const fd = timerfd::new(time::clock::MONOTONIC, 0)!;
+	defer io::close(fd)!;
+	timerfd::set(fd, (500 * time::MILLISECOND): timerfd::interval, 0)!;
+	signal::handle(signal::SIGINT, &sigint);
 
-	fmt::printfln("Accelerometer: {} {} {} g", acc_readings.0, acc_readings.1, acc_readings.2)!;
-	fmt::printfln("Gyroscope: {} {} {} dps", gyro_readings.0, gyro_readings.1, gyro_readings.2)!;
+	for (!exit) {
+		timerfd::read(fd)!;
+		const acc_readings = ADXL345::read(ADXL345)!;
+		const gyro_readings = L3G4200D::read(L3G4200D)!;
+
+		fmt::printfln("Accelerometer: {} {} {} g", acc_readings.0, acc_readings.1, acc_readings.2)!;
+		fmt::printfln("Gyroscope: {} {} {} dps", gyro_readings.0, gyro_readings.1, gyro_readings.2)!;
+	};
 };

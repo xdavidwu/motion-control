@@ -11,7 +11,13 @@ export fn new(neutral: (f64, f64, f64)) tilt = {
 export fn estimate(tilt: tilt, readings: (f64, f64, f64)) quaternion::quaternion = {
 	// neutral = q r q^(-1), find q
 	let r = quaternion::normalize((0.0, readings.0, readings.1, readings.2));
-	const dot = tilt.neutral.1 * r.1  + tilt.neutral.2 * r.2 + tilt.neutral.3 * r.3;
+	let dot = tilt.neutral.1 * r.1  + tilt.neutral.2 * r.2 + tilt.neutral.3 * r.3;
+	if (dot > 1f64) {
+		dot = 1f64;
+	};
+	if (dot < -1f64) {
+		dot = -1f64;
+	};
 	const angle = math::acosf64(dot);
 	const axis = (
 		r.2 * tilt.neutral.3 - r.3 * tilt.neutral.2,

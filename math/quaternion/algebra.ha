@@ -21,3 +21,7 @@ export fn normalize(a: quaternion) quaternion = {
 	const norm = norm(a);
 	return (a.0 / norm, a.1 / norm, a.2 / norm, a.3 / norm);
 };
+
+export fn conjugate(a: quaternion) quaternion = {
+	return (a.0, -a.1, -a.2, -a.3);
+};

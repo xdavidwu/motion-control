@@ -1,0 +1,31 @@
+use ahrs::integration;
+use ahrs::tilt;
+use math::quaternion;
+
+export fn new(neutral: (f64, f64, f64), alpha: f64) complementary = {
+	return alloc(complementary_impl {
+		alpha = alpha,
+		integration = integration::new(),
+		tilt = tilt::new(neutral),
+	});
+};
+
+export fn update(complementary: complementary, readings: (f64, f64, f64), dt: f64) void =
+	integration::update(complementary.integration, readings, dt);
+
+export fn read_euler(complementary: complementary) (f64, f64, f64) =
+	integration::read_euler(complementary.integration);
+
+export fn update_accelerometer(complementary: complementary, readings: (f64, f64, f64)) void = {
+	let q_accel = tilt::estimate(complementary.tilt, readings);
+	complementary.integration.q = quaternion::slerp(
+		complementary.integration.q,
+		q_accel,
+		complementary.alpha);
+};
+
+export fn destroy(complementary: complementary) void = {
+	integration::destroy(complementary.integration);
+	tilt::destroy(complementary.tilt);
+	free(complementary);
+};

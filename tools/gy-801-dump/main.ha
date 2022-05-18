@@ -1,3 +1,4 @@
+use ahrs::complementary;
 use ahrs::tilt;
 use ahrs::integration;
 use fmt;
@@ -63,18 +64,23 @@ export fn main() void = {
 	const acc_readings = ADXL345::read(ADXL345)!;
 	fmt::printfln("Neutral acc.: {} {} {} g", acc_readings.0, acc_readings.1, acc_readings.2)!;
 	const tilt = tilt::new(acc_readings);
+	const complementary = complementary::new(acc_readings, 0.02);
 
 	for (let i = 0; !exit; i += 1) {
 		timerfd::read(fd)!;
 		const gyro_readings = L3G4200D::read(L3G4200D)!;
+		const acc_readings = ADXL345::read(ADXL345)!;
 		let rps = (gyro_readings.0 / 180.0 * math::PI,
 			gyro_readings.1 / 180.0 * math::PI,
 			gyro_readings.2 / 180.0 * math::PI);
 		integration::update(integrator, rps, 0.01);
+		complementary::update(complementary, rps, 0.01);
+		complementary::update_accelerometer(complementary, acc_readings);
+
 		if (i % 50 == 0) {
-			const acc_readings = ADXL345::read(ADXL345)!;
 			let attitude = integration::read_euler(integrator);
 			let tilt_attitude = tilt::estimate_euler(tilt, acc_readings);
+			let complementary_attitude = complementary::read_euler(complementary);
 
 			fmt::printfln("Accelerometer: {} {} {} g",
 				acc_readings.0, acc_readings.1, acc_readings.2)!;
@@ -88,6 +94,10 @@ export fn main() void = {
 				tilt_attitude.0 / math::PI * 180.0,
 				tilt_attitude.1 / math::PI * 180.0,
 				tilt_attitude.2 / math::PI * 180.0)!;
+			fmt::printfln("Attitude (complementary): {} {} {} deg",
+				complementary_attitude.0 / math::PI * 180.0,
+				complementary_attitude.1 / math::PI * 180.0,
+				complementary_attitude.2 / math::PI * 180.0)!;
 		};
 	};
 };

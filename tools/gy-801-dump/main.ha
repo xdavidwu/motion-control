@@ -1,3 +1,4 @@
+use ahrs::tilt;
 use ahrs::integration;
 use fmt;
 use fs;
@@ -58,6 +59,11 @@ export fn main() void = {
 	signal::handle(signal::SIGINT, &sigint);
 	const integrator = integration::new();
 
+	timerfd::read(fd)!;
+	const acc_readings = ADXL345::read(ADXL345)!;
+	fmt::printfln("Neutral acc.: {} {} {} g", acc_readings.0, acc_readings.1, acc_readings.2)!;
+	const tilt = tilt::new(acc_readings);
+
 	for (let i = 0; !exit; i += 1) {
 		timerfd::read(fd)!;
 		const gyro_readings = L3G4200D::read(L3G4200D)!;
@@ -68,6 +74,7 @@ export fn main() void = {
 		if (i % 50 == 0) {
 			const acc_readings = ADXL345::read(ADXL345)!;
 			let attitude = integration::read_euler(integrator);
+			let tilt_attitude = tilt::estimate_euler(tilt, acc_readings);
 
 			fmt::printfln("Accelerometer: {} {} {} g",
 				acc_readings.0, acc_readings.1, acc_readings.2)!;
@@ -77,6 +84,10 @@ export fn main() void = {
 				attitude.0 / math::PI * 180.0,
 				attitude.1 / math::PI * 180.0,
 				attitude.2 / math::PI * 180.0)!;
+			fmt::printfln("Attitude (tilt): {} {} {} deg",
+				tilt_attitude.0 / math::PI * 180.0,
+				tilt_attitude.1 / math::PI * 180.0,
+				tilt_attitude.2 / math::PI * 180.0)!;
 		};
 	};
 };

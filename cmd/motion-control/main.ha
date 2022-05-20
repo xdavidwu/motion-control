@@ -102,7 +102,7 @@ export fn main() int = {
 
 		let attitude = complementary::read_euler(complementary);
 		buf.x = ((attitude.2 / math::PI * 180.0): int / 8): i8;
-		buf.y = ((attitude.1 / math::PI * 180.0): int / 8): i8;
+		buf.y = ((attitude.1 / math::PI * 180.0): int / 4): i8;
 		match (udp::send(sock, buf.bytes)) {
 		case let err: net::error =>
 			fmt::fatalf("Cannot send(): {}", net::strerror(err));

@@ -84,7 +84,7 @@ export fn main() int = {
 	const fd = timerfd::new(time::clock::MONOTONIC, 0)!;
 	defer io::close(fd)!;
 	timerfd::set(fd, (10 * time::MILLISECOND): timerfd::interval, 0)!;
-	signal::handle(signal::SIGINT, &sigint);
+	signal::handle(signal::SIGINT, &sigint, signal::flag::RESTART);
 
 	timerfd::read(fd)!;
 	const acc_readings = ADXL345::read(ADXL345)!;

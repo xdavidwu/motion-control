@@ -1,3 +1,4 @@
+use errors;
 use evdev;
 use evdev::uinput;
 use fmt;
@@ -8,6 +9,13 @@ use net::udp;
 use proto::control;
 use rt;
 use time;
+use unix::signal;
+
+let exit: bool	= false;
+
+fn sigint(sig: int, info: *signal::siginfo, ucontext: *void) void = {
+	exit = true;
+};
 
 export fn main() void = {
 	const evdev = evdev::new();
@@ -30,7 +38,7 @@ export fn main() void = {
 	defer uinput::destroy(uinput);
 
 	const addr = ip::ANY_V6, port = control::DEFAULT_PORT;
-	const sock = match(udp::listen(addr, port)) {
+	const sock = match (udp::listen(addr, port)) {
 	case let sock: io::file =>
 		yield sock;
 	case let err: net::error =>
@@ -39,9 +47,17 @@ export fn main() void = {
 	};
 	defer io::close(sock)!;
 
+	signal::handle(signal::SIGINT, &sigint);
 	let buf = control::request {...};
 	for (true) {
-		const sz = udp::recvfrom(sock, buf.bytes, null, null)!;
+		const sz = match (udp::recvfrom(sock, buf.bytes, null, null)) {
+		case let sz: size =>
+			yield sz;
+		case errors::interrupted =>
+			break;
+		case let err: net::error =>
+			fmt::fatalf("recvfrom: {}", net::strerror(err));
+		};
 		if (sz != size(control::request)) {
 			fmt::errorln("Unexpected read size")!;
 			continue;

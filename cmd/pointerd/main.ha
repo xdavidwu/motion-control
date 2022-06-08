@@ -17,6 +17,17 @@ fn sigint(sig: int, info: *signal::siginfo, ucontext: *void) void = {
 	exit = true;
 };
 
+fn protocol_key_to_event_code(key: u8) u16 = {
+	switch (key) {
+	case control::key::BTN_LEFT =>
+		return evdev::BTN_LEFT;
+	case control::key::BTN_RIGHT =>
+		return evdev::BTN_RIGHT;
+	case =>
+		fmt::fatalf("Invalid key code {}", key);
+	};
+};
+
 export fn main() void = {
 	const evdev = evdev::new();
 	defer evdev::destroy(evdev);
@@ -66,6 +77,14 @@ export fn main() void = {
 		case control::code::RELATIVE_MOVEMENT =>
 			uinput::write_event(uinput, evdev::EV_REL, evdev::REL_X, buf.x)!;
 			uinput::write_event(uinput, evdev::EV_REL, evdev::REL_Y, buf.y)!;
+			uinput::write_event(uinput, evdev::EV_SYN, evdev::SYN_REPORT, 0)!;
+		case control::code::KEY_PRESSED =>
+			const code = protocol_key_to_event_code(buf.key);
+			uinput::write_event(uinput, evdev::EV_KEY, code, 1)!;
+			uinput::write_event(uinput, evdev::EV_SYN, evdev::SYN_REPORT, 0)!;
+		case control::code::KEY_RELEASED =>
+			const code = protocol_key_to_event_code(buf.key);
+			uinput::write_event(uinput, evdev::EV_KEY, code, 0)!;
 			uinput::write_event(uinput, evdev::EV_SYN, evdev::SYN_REPORT, 0)!;
 		case =>
 			fmt::errorfln("Unrecognized control code: {}", buf.code)!;

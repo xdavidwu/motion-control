@@ -1,6 +1,7 @@
 use ahrs::complementary;
 use fmt;
 use fs;
+use getopt;
 use io;
 use linux::timerfd;
 use math;
@@ -44,28 +45,34 @@ fn sigusr1(sig: int, info: *signal::siginfo, ucontext: *void) void = {
 	};
 };
 
-
 export fn main() int = {
-	if (len(os::args) != 4) {
-		fmt::fatalf("Usage: {} bus addr port", os::args[0]);
+	const help: []getopt::help = [
+		"control pointerd with motion",
+		"bus addr port",
+	];
+	const cmd = getopt::parse(os::args, help...);
+	defer getopt::finish(&cmd);
+	if (len(cmd.args) != 3) {
+		getopt::printusage(os::stderr, os::args[0], help);
+		os::exit(-1);
 	};
-	const bus = match (strconv::stoi(os::args[1])) {
+	const bus = match (strconv::stoi(cmd.args[0])) {
 	case let bus: int =>
 		yield bus;
 	case =>
 		fmt::fatal("bus should be a integer");
 	};
-	const addr = match (ip::parse(os::args[2])) {
+	const addr = match (ip::parse(cmd.args[1])) {
 	case let addr: ip::addr =>
 		yield addr;
 	case ip::invalid =>
-		fmt::fatalf("Invalid address {}", os::args[1]);
+		fmt::fatalf("Invalid address {}", cmd.args[1]);
 	};
-	const port = match (strconv::stou16(os::args[3])) {
+	const port = match (strconv::stou16(cmd.args[2])) {
 	case let port: u16 =>
 		yield port;
 	case =>
-		fmt::fatalf("Invalid port {}", os::args[2]);
+		fmt::fatalf("Invalid port {}", cmd.args[2]);
 	};
 
 	const buf = control::request {

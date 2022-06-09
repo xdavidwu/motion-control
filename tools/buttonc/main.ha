@@ -1,4 +1,5 @@
 use fmt;
+use getopt;
 use io;
 use net;
 use net::ip;
@@ -18,20 +19,27 @@ fn send(sock: io::file, bytes: []u8) void = {
 };
 
 export fn main() int = {
-	if (len(os::args) != 3) {
-		fmt::fatalf("Usage: {} addr port", os::args[0]);
+	const help: []getopt::help = [
+		"control pointerd with buttons",
+		"addr port",
+	];
+	const cmd = getopt::parse(os::args, help...);
+	defer getopt::finish(&cmd);
+	if (len(cmd.args) != 2) {
+		getopt::printusage(os::stderr, os::args[0], help);
+		os::exit(-1);
 	};
-	const addr = match (ip::parse(os::args[1])) {
+	const addr = match (ip::parse(cmd.args[0])) {
 	case let addr: ip::addr =>
 		yield addr;
 	case ip::invalid =>
-		fmt::fatalf("Invalid address {}", os::args[1]);
+		fmt::fatalf("Invalid address {}", cmd.args[0]);
 	};
-	const port = match (strconv::stou16(os::args[2])) {
+	const port = match (strconv::stou16(cmd.args[1])) {
 	case let port: u16 =>
 		yield port;
 	case =>
-		fmt::fatalf("Invalid port {}", os::args[2]);
+		fmt::fatalf("Invalid port {}", cmd.args[1]);
 	};
 
 	const sock = match (udp::connect(addr, port)) {

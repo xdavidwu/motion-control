@@ -16,11 +16,34 @@ use strconv;
 use time;
 use unix::signal;
 
-let exit: bool	= false;
+type state = enum u8 {
+	NORMAL,
+	BLOCK,
+	RESET,
+	EXIT,
+};
+
+let global_state: state	= state::NORMAL;
 
 fn sigint(sig: int, info: *signal::siginfo, ucontext: *void) void = {
-	exit = true;
+	global_state = state::EXIT;
 };
+
+fn sigusr1(sig: int, info: *signal::siginfo, ucontext: *void) void = {
+	switch (global_state) {
+	case state::NORMAL =>
+		fmt::println("Block")!;
+		global_state = state::BLOCK;
+	case state::BLOCK =>
+		fmt::println("Reset")!;
+		global_state = state::RESET;
+	case state::RESET =>
+		fmt::println("Reset is already pending")!;
+	case state::EXIT =>
+		fmt::println("Exit pending")!;
+	};
+};
+
 
 export fn main() int = {
 	if (len(os::args) != 4) {
@@ -85,29 +108,42 @@ export fn main() int = {
 	defer io::close(fd)!;
 	timerfd::set(fd, (10 * time::MILLISECOND): timerfd::interval, 0)!;
 	signal::handle(signal::SIGINT, &sigint, signal::flag::RESTART);
+	signal::handle(signal::SIGUSR1, &sigusr1, signal::flag::RESTART);
 
 	timerfd::read(fd)!;
 	const acc_readings = ADXL345::read(ADXL345)!;
-	const complementary = complementary::new(acc_readings, 0.02);
+	let complementary = complementary::new(acc_readings, 0.02);
 
-	for (let i = 0; !exit; i += 1) {
+	for (let i = 0; global_state != state::EXIT; i += 1) {
 		timerfd::read(fd)!;
-		const gyro_readings = L3G4200D::read(L3G4200D)!;
-		const acc_readings = ADXL345::read(ADXL345)!;
-		let rps = (gyro_readings.0 / 180.0 * math::PI,
-			gyro_readings.1 / 180.0 * math::PI,
-			gyro_readings.2 / 180.0 * math::PI);
-		complementary::update(complementary, rps, 0.01);
-		complementary::update_accelerometer(complementary, acc_readings);
+		switch (global_state) {
+		case state::NORMAL =>
+			const gyro_readings = L3G4200D::read(L3G4200D)!;
+			const acc_readings = ADXL345::read(ADXL345)!;
+			let rps = (gyro_readings.0 / 180.0 * math::PI,
+				gyro_readings.1 / 180.0 * math::PI,
+				gyro_readings.2 / 180.0 * math::PI);
+			complementary::update(complementary, rps, 0.01);
+			complementary::update_accelerometer(complementary, acc_readings);
 
-		let attitude = complementary::read_euler(complementary);
-		buf.x = ((attitude.2 / math::PI * 180.0): int / 8): i8;
-		buf.y = ((attitude.1 / math::PI * 180.0): int / 4): i8;
-		match (udp::send(sock, buf.bytes)) {
-		case let err: net::error =>
-			fmt::fatalf("Cannot send(): {}", net::strerror(err));
-		case size =>
+			let attitude = complementary::read_euler(complementary);
+			buf.x = ((attitude.2 / math::PI * 180.0): int / 8): i8;
+			buf.y = ((attitude.1 / math::PI * 180.0): int / 4): i8;
+			match (udp::send(sock, buf.bytes)) {
+			case let err: net::error =>
+				fmt::fatalf("Cannot send(): {}", net::strerror(err));
+			case size =>
+				yield;
+			};
+		case state::BLOCK =>
 			yield;
+		case state::RESET =>
+			complementary::destroy(complementary);
+			const acc_readings = ADXL345::read(ADXL345)!;
+			complementary = complementary::new(acc_readings, 0.02);
+			global_state = state::NORMAL;
+		case state::EXIT =>
+			break;
 		};
 	};
 

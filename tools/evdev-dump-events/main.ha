@@ -1,9 +1,11 @@
+use errors;
 use evdev;
 use fmt;
 use fs;
 use io;
-use rt;
 use os;
+use rt;
+use strconv;
 
 export fn main() void = {
 	if (len(os::args) != 2) {
@@ -37,6 +39,18 @@ export fn main() void = {
 				fmt::fatalf("Failed to get event: {}", rt::strerror(err));
 			};
 		};
-		fmt::printfln("event {} {} {}", ev._type, ev.code, ev.value)!;
+		match (evdev::event_type_get_name(ev._type)) {
+		case errors::invalid =>
+			fmt::printf("{:-13}", ev._type)!;
+		case let s: const str =>
+			fmt::printf("{:-13}", s)!;
+		};
+		match (evdev::event_code_get_name(ev._type, ev.code)) {
+		case errors::invalid =>
+			fmt::printf(" {:-29}", ev.code)!;
+		case let s: const str =>
+			fmt::printf(" {:-29}", s)!;
+		};
+		fmt::printfln(" {}", ev.value)!;
 	};
 };

@@ -81,12 +81,12 @@ export fn main() int = {
 	};
 
 	const sock = match (udp::connect(addr, port)) {
-	case let s: io::file =>
+	case let s: net::socket =>
 		yield s;
 	case let err: net::error =>
 		fmt::fatalf("Cannot connect() {}:{}: {}", ip::string(addr), port, net::strerror(err));
 	};
-	defer io::close(sock)!;
+	defer net::close(sock)!;
 
 	const ADXL345 = match (ADXL345::new(bus)) {
 	case let ADXL345: ADXL345::ADXL345 =>

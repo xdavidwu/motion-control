@@ -1,5 +1,4 @@
 use fmt;
-use io;
 use net;
 use net::ip;
 use net::udp;
@@ -9,7 +8,7 @@ use strconv;
 use strings;
 use time;
 
-fn send(sock: io::file, bytes: []u8) void = {
+fn send(sock: net::socket, bytes: []u8) void = {
 	match (udp::send(sock, bytes)) {
 	case let err: net::error =>
 		fmt::fatalf("Cannot send(): {}", net::strerror(err));
@@ -36,12 +35,12 @@ export fn main() int = {
 	};
 
 	const sock = match (udp::connect(addr, port)) {
-	case let s: io::file =>
+	case let s: net::socket =>
 		yield s;
 	case let err: net::error =>
 		fmt::fatalf("Cannot connect() {}:{}: {}", ip::string(addr), port, net::strerror(err));
 	};
-	defer io::close(sock)!;
+	defer net::close(sock)!;
 
 	let buf = control::request {...};
 

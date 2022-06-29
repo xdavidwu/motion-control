@@ -2,7 +2,6 @@ use errors;
 use evdev;
 use evdev::uinput;
 use fmt;
-use io;
 use net;
 use net::ip;
 use net::udp;
@@ -50,13 +49,13 @@ export fn main() void = {
 
 	const addr = ip::ANY_V6, port = control::DEFAULT_PORT;
 	const sock = match (udp::listen(addr, port)) {
-	case let sock: io::file =>
+	case let sock: net::socket =>
 		yield sock;
 	case let err: net::error =>
 		fmt::fatalf("Failed to listen on {}:{}: {}",
 			ip::string(addr), port, net::strerror(err));
 	};
-	defer io::close(sock)!;
+	defer net::close(sock)!;
 
 	signal::handle(signal::SIGINT, &sigint);
 	let buf = control::request {...};

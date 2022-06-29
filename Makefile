@@ -1,9 +1,17 @@
+SENSORS ?= gy-801
+BINARIES = evdev-dump-events uinput-pointer sensors-dump pointerd pointerc motion-control buttonc
+
 evdev-dump-events uinput-pointer:
 	hare build -levdev -o $@ tools/$@/
-gy-801-dump pointerc buttonc:
+sensors-dump pointerc:
+	hare build -T +$(SENSORS) -o $@ tools/$@/
+buttonc:
 	hare build -o $@ tools/$@/
 pointerd:
 	hare build -levdev -o $@ cmd/$@/
 motion-control:
-	hare build -o $@ cmd/$@/
-.PHONY: evdev-dump-events uinput-pointer gy-801-dump pointerd pointerc motion-control buttonc
+	hare build -T +$(SENSORS) -o $@ cmd/$@/
+.PHONY: $(BINARIES)
+all: $(BINARIES)
+clean:
+	rm -f $(BINARIES)

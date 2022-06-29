@@ -1,3 +1,4 @@
+use errors;
 use io;
 use rt;
 use strings;
@@ -41,6 +42,22 @@ export fn enable_event_code(dev: libevdev, event_type: uint, code: uint,
 		unknown_error else void;
 };
 
+export fn event_type_get_name(_type: u16) (const str | errors::invalid) =
+	match (c_libevdev_event_type_get_name(_type)) {
+	case null =>
+		return errors::invalid;
+	case let s: *const char =>
+		return strings::fromc(s);
+	};
+
+export fn event_code_get_name(_type: u16, code: u16) (const str | errors::invalid) =
+	match (c_libevdev_event_code_get_name(_type, code)) {
+	case null =>
+		return errors::invalid;
+	case let s: *const char =>
+		return strings::fromc(s);
+	};
+
 export @symbol("libevdev_new") fn new() libevdev;
 export @symbol("libevdev_free") fn destroy(dev: libevdev) void;
 
@@ -53,3 +70,5 @@ export @symbol("libevdev_free") fn destroy(dev: libevdev) void;
 	dev: libevdev, etype: uint) int;
 @symbol("libevdev_enable_event_code") fn c_libevdev_enable_event_code(
 	dev: libevdev, etype: uint, code: uint, data: nullable *void) int;
+@symbol("libevdev_event_type_get_name") fn c_libevdev_event_type_get_name(_type: uint) nullable *const char;
+@symbol("libevdev_event_code_get_name") fn c_libevdev_event_code_get_name(_type: uint, code: uint) nullable *const char;

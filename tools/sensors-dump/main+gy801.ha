@@ -1,11 +1,11 @@
 use ahrs::complementary;
 use ahrs::tilt;
 use ahrs::integration;
+use errors;
 use fmt;
 use fs;
 use io;
 use os;
-use rt;
 use linux::timerfd;
 use math;
 use sensors::ADXL345;
@@ -36,8 +36,8 @@ export fn main() void = {
 		yield ADXL345;
 	case let err: fs::error =>
 		fmt::fatalf("Cannot open i2c device: {}", fs::strerror(err));
-	case let err: rt::errno =>
-		fmt::fatalf("Cannot ioctl i2c device: {}", rt::strerror(err));
+	case let err: errors::error =>
+		fmt::fatalf("Cannot ioctl i2c device: {}", errors::strerror(err));
 	};
 	defer ADXL345::destroy(ADXL345);
 
@@ -46,8 +46,8 @@ export fn main() void = {
 		yield L3G4200D;
 	case let err: fs::error =>
 		fmt::fatalf("Cannot open i2c device: {}", fs::strerror(err));
-	case let err: rt::errno =>
-		fmt::fatalf("Cannot ioctl i2c device: {}", rt::strerror(err));
+	case let err: errors::error =>
+		fmt::fatalf("Cannot ioctl i2c device: {}", errors::strerror(err));
 	};
 	defer L3G4200D::destroy(L3G4200D);
 

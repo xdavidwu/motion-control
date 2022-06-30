@@ -3,11 +3,11 @@ use io;
 use rt;
 use strings;
 
-export fn new_from_fd(fd: io::file) (rt::errno | libevdev) = {
+export fn new_from_fd(fd: io::file) (errors::error | libevdev) = {
 	let handle = null: libevdev;
 	const r = c_libevdev_new_from_fd(fd, &handle);
 	if (r < 0) {
-		return (-r): rt::errno;
+		return errors::errno(-r);
 	};
 	return handle;
 };
@@ -22,11 +22,11 @@ export fn set_name(dev: libevdev, name: str) void = {
 	c_libevdev_set_name(dev, cstr);
 };
 
-export fn next_event(dev: libevdev, flags: uint) (rt::errno | input_event) = {
+export fn next_event(dev: libevdev, flags: uint) (errors::error | input_event) = {
 	let ev = input_event { ... };
 	const r = c_libevdev_next_event(dev, flags, &ev);
 	if (r < 0) {
-		return (-r): rt::errno;
+		return errors::errno(-r);
 	};
 	return ev;
 };

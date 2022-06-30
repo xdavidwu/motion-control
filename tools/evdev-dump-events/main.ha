@@ -4,7 +4,6 @@ use fmt;
 use fs;
 use io;
 use os;
-use rt;
 use strconv;
 
 export fn main() void = {
@@ -21,8 +20,8 @@ export fn main() void = {
 	const evdev = match (evdev::new_from_fd(file)) {
 	case let evdev: evdev::libevdev =>
 		yield evdev;
-	case let err: rt::errno =>
-		fmt::fatalf("Failed to init libevdev: {}", rt::strerror(err));
+	case let err: errors::error =>
+		fmt::fatalf("Failed to init libevdev: {}", errors::strerror(err));
 	};
 
 	fmt::printfln("Input device name: {}", evdev::get_name(evdev))!;
@@ -31,12 +30,12 @@ export fn main() void = {
 		let ev = match (evdev::next_event(evdev, evdev::READ_FLAG_NORMAL)) {
 		case let ev: evdev::input_event =>
 			yield ev;
-		case let err: rt::errno =>
-			switch (err) {
-			case rt::EAGAIN =>
+		case let err: errors::error =>
+			match (err) {
+			case errors::again =>
 				continue;
 			case =>
-				fmt::fatalf("Failed to get event: {}", rt::strerror(err));
+				fmt::fatalf("Failed to get event: {}", errors::strerror(err));
 			};
 		};
 		match (evdev::event_type_get_name(ev._type)) {

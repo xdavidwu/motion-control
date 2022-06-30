@@ -1,3 +1,4 @@
+use errors;
 use evdev;
 use evdev::uinput;
 use fmt;
@@ -19,8 +20,8 @@ export fn main() void = {
 	const uinput = match (uinput::create_from_device(evdev, uinput::OPEN_MANAGED)) {
 	case let uinput: uinput::uinput =>
 		yield uinput;
-	case let err: rt::errno =>
-		fmt::fatalf("Failed to create uinput dev: {}", rt::strerror(err));
+	case let err: errors::error =>
+		fmt::fatalf("Failed to create uinput dev: {}", errors::strerror(err));
 	};
 	defer uinput::destroy(uinput);
 

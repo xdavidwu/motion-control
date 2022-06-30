@@ -1,4 +1,4 @@
-SENSORS ?= gy-801
+SENSORS ?= gy801
 BINARIES = evdev-dump-events uinput-pointer sensors-dump pointerd pointerc motion-control buttonc
 
 evdev-dump-events uinput-pointer:

@@ -5,3 +5,5 @@
 /pointerd
 /motion-control
 /buttonc
+/evdev/codes.ha
+/event-codes

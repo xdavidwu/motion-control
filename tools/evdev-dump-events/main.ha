@@ -27,9 +27,15 @@ export fn main() void = {
 	fmt::printfln("Input device name: {}", evdev::get_name(evdev))!;
 
 	for (true) {
-		let ev = match (evdev::next_event(evdev, evdev::READ_FLAG_NORMAL)) {
-		case let ev: evdev::input_event =>
-			yield ev;
+		let ev = evdev::input_event {...};
+		match (evdev::next_event(evdev, evdev::read_flag::NORMAL, &ev)) {
+		case let r: evdev::read_status =>
+			switch (r) {
+			case evdev::read_status::SUCCESS =>
+				yield;
+			case evdev::read_status::SYNC =>
+				continue;
+			};
 		case let err: errors::error =>
 			match (err) {
 			case errors::again =>

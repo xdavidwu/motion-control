@@ -22,13 +22,12 @@ export fn set_name(dev: libevdev, name: str) void = {
 	c_libevdev_set_name(dev, cstr);
 };
 
-export fn next_event(dev: libevdev, flags: uint) (errors::error | input_event) = {
-	let ev = input_event { ... };
-	const r = c_libevdev_next_event(dev, flags, &ev);
+export fn next_event(dev: libevdev, flags: uint, ev: *input_event) (errors::error | read_status) = {
+	const r = c_libevdev_next_event(dev, flags, ev);
 	if (r < 0) {
 		return errors::errno(-r);
 	};
-	return ev;
+	return r: read_status;
 };
 
 export fn enable_event_type(dev: libevdev, event_type: uint) (void | unknown_error) = {

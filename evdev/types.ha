@@ -11,4 +11,14 @@ export type input_event = struct {
 
 export type unknown_error = !void;
 
-export def READ_FLAG_NORMAL: uint	= 2;
+export type read_status = enum int {
+	SUCCESS	= 0,
+	SYNC	= 1,
+};
+
+export type read_flag = enum uint {
+	SYNC	= 1,
+	NORMAL	= 2,
+	FORCE_SYNC	= 4,
+	BLOCKING	= 8,
+};

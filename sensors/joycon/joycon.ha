@@ -119,11 +119,11 @@ export fn next_sample(joycon: joycon) (sample | errors::error) = {
 			case evdev::ABS_Y =>
 				joycon.read |= READ_Y;
 				joycon.state.accelerometer.1 =
-					ev.value: f64 * ACCEL_SCALE;
+					-ev.value: f64 * ACCEL_SCALE;
 			case evdev::ABS_Z =>
 				joycon.read |= READ_Z;
 				joycon.state.accelerometer.2 =
-					ev.value: f64 * ACCEL_SCALE;
+					-ev.value: f64 * ACCEL_SCALE;
 			case evdev::ABS_RX =>
 				joycon.read |= READ_RX;
 				joycon.state.gyroscope.0 =
@@ -131,11 +131,11 @@ export fn next_sample(joycon: joycon) (sample | errors::error) = {
 			case evdev::ABS_RY =>
 				joycon.read |= READ_RY;
 				joycon.state.gyroscope.1 =
-					ev.value: f64 * GYRO_SCALE;
+					-ev.value: f64 * GYRO_SCALE;
 			case evdev::ABS_RZ =>
 				joycon.read |= READ_RZ;
 				joycon.state.gyroscope.2 =
-					ev.value: f64 * GYRO_SCALE;
+					-ev.value: f64 * GYRO_SCALE;
 			};
 		case evdev::EV_MSC =>
 			assert(ev.code == evdev::MSC_TIMESTAMP);

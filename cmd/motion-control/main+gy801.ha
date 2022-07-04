@@ -7,7 +7,7 @@ use io;
 use linux::timerfd;
 use math;
 use net;
-use net::ip;
+use net::dial;
 use net::udp;
 use os;
 use proto::control;
@@ -48,11 +48,11 @@ fn sigusr1(sig: int, info: *signal::siginfo, ucontext: *void) void = {
 export fn main() int = {
 	const help: []getopt::help = [
 		"control pointerd with motion",
-		"bus addr port",
+		"bus address",
 	];
 	const cmd = getopt::parse(os::args, help...);
 	defer getopt::finish(&cmd);
-	if (len(cmd.args) != 3) {
+	if (len(cmd.args) != 2) {
 		getopt::printusage(os::stderr, os::args[0], help);
 		os::exit(-1);
 	};
@@ -62,29 +62,17 @@ export fn main() int = {
 	case =>
 		fmt::fatal("bus should be a integer");
 	};
-	const addr = match (ip::parse(cmd.args[1])) {
-	case let addr: ip::addr =>
-		yield addr;
-	case ip::invalid =>
-		fmt::fatalf("Invalid address {}", cmd.args[1]);
-	};
-	const port = match (strconv::stou16(cmd.args[2])) {
-	case let port: u16 =>
-		yield port;
-	case =>
-		fmt::fatalf("Invalid port {}", cmd.args[2]);
-	};
 
 	const buf = control::request {
 		code = control::code::RELATIVE_MOVEMENT,
 		...,
 	};
 
-	const sock = match (udp::connect(addr, port)) {
+	const sock = match (dial::dial("udp", cmd.args[1], strconv::u16tos(control::DEFAULT_PORT))) {
 	case let s: net::socket =>
 		yield s;
 	case let err: net::error =>
-		fmt::fatalf("Cannot connect() {}:{}: {}", ip::string(addr), port, net::strerror(err));
+		fmt::fatalf("Cannot dial() {}: {}", cmd.args[1], net::strerror(err));
 	};
 	defer net::close(sock)!;
 

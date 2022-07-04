@@ -2,7 +2,7 @@ use fmt;
 use getopt;
 use io;
 use net;
-use net::ip;
+use net::dial;
 use net::udp;
 use os;
 use os::exec;
@@ -23,7 +23,7 @@ export fn main() int = {
 	const help: []getopt::help = [
 		"control pointerd with buttons",
 		('m', "pid", "motion-control pid, for attitude reset key combo"),
-		"addr port",
+		"address",
 	];
 	const cmd = getopt::parse(os::args, help...);
 	defer getopt::finish(&cmd);
@@ -42,28 +42,16 @@ export fn main() int = {
 		};
 	};
 
-	if (len(cmd.args) != 2) {
+	if (len(cmd.args) != 1) {
 		getopt::printusage(os::stderr, os::args[0], help);
 		os::exit(-1);
 	};
-	const addr = match (ip::parse(cmd.args[0])) {
-	case let addr: ip::addr =>
-		yield addr;
-	case ip::invalid =>
-		fmt::fatalf("Invalid address {}", cmd.args[0]);
-	};
-	const port = match (strconv::stou16(cmd.args[1])) {
-	case let port: u16 =>
-		yield port;
-	case =>
-		fmt::fatalf("Invalid port {}", cmd.args[1]);
-	};
 
-	const sock = match (udp::connect(addr, port)) {
+	const sock = match (dial::dial("udp", cmd.args[0], strconv::u16tos(control::DEFAULT_PORT))) {
 	case let s: net::socket =>
 		yield s;
 	case let err: net::error =>
-		fmt::fatalf("Cannot connect() {}:{}: {}", ip::string(addr), port, net::strerror(err));
+		fmt::fatalf("Cannot dial() {}: {}", cmd.args[0], net::strerror(err));
 	};
 	defer net::close(sock)!;
 

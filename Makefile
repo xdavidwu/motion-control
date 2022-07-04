@@ -14,9 +14,9 @@ evdev/codes.ha: event-codes
 
 evdev-dump-events uinput-pointer: evdev/codes.ha
 	hare build -levdev -o $@ tools/$@/
-sensors-dump pointerc:
+sensors-dump:
 	hare build $(SENSORS_LIBS) -T +$(SENSORS) -o $@ tools/$@/
-buttonc:
+buttonc pointerc:
 	hare build -o $@ tools/$@/
 pointerd: evdev/codes.ha
 	hare build -levdev -o $@ cmd/$@/

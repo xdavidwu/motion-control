@@ -1,6 +1,11 @@
 SENSORS ?= gy801
+SENSORS_LIBS =
 HEADERS_PREFIX ?= /usr/include
 BINARIES = evdev-dump-events uinput-pointer sensors-dump pointerd pointerc motion-control buttonc
+
+ifeq ($(SENSORS), joycon)
+	SENSORS_LIBS = -levdev
+endif
 
 event-codes:
 	hare build -o $@ aux/$@/
@@ -10,13 +15,13 @@ evdev/codes.ha: event-codes
 evdev-dump-events uinput-pointer: evdev/codes.ha
 	hare build -levdev -o $@ tools/$@/
 sensors-dump pointerc:
-	hare build -T +$(SENSORS) -o $@ tools/$@/
+	hare build $(SENSORS_LIBS) -T +$(SENSORS) -o $@ tools/$@/
 buttonc:
 	hare build -o $@ tools/$@/
 pointerd: evdev/codes.ha
 	hare build -levdev -o $@ cmd/$@/
 motion-control:
-	hare build -T +$(SENSORS) -o $@ cmd/$@/
+	hare build $(SENSORS_LIBS) -T +$(SENSORS) -o $@ cmd/$@/
 .PHONY: $(BINARIES)
 all: $(BINARIES)
 clean:

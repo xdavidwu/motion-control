@@ -4,7 +4,6 @@ use fmt;
 use fs;
 use io;
 use os;
-use strings;
 use types;
 
 export fn new(dev: (io::file | void)) (joycon | errors::error) = {
@@ -12,12 +11,11 @@ export fn new(dev: (io::file | void)) (joycon | errors::error) = {
 	case let f: io::file =>
 		return alloc(joycon_impl { dev = evdev::new_from_fd(f)?, ... });
 	case void =>
-		const preferences: []const str = [
-			"Nintendo Switch Pro Controller IMU",
-			"Nintendo Switch Right Joy-Con IMU (Grip)",
-			"Nintendo Switch Left Joy-Con IMU (Grip)",
-			"Nintendo Switch Right Joy-Con IMU",
-			"Nintendo Switch Left Joy-Con IMU",
+		const preferences: []int = [
+			USB_DEVICE_ID_NINTENTO_PROCON,
+			USB_DEVICE_ID_NINTENTO_CHRGGRIP,
+			USB_DEVICE_ID_NINTENTO_JOYCONR,
+			USB_DEVICE_ID_NINTENTO_JOYCONL,
 		];
 		const fs = os::diropen("/dev/input")!;
 		const iter = fs::iter(fs, ".")!;
@@ -41,23 +39,31 @@ export fn new(dev: (io::file | void)) (joycon | errors::error) = {
 				continue;
 			};
 			const e = evdev::new_from_fd(f)!;
-			const name = evdev::get_name(e);
+			let taken = false;
+			defer if (!taken) {
+				evdev::destroy(e);
+				io::close(f)!;
+			};
 
-			let eligible = false;
+			if (evdev::get_id_vendor(e) != USB_VENDOR_ID_NINTENDO ||
+					!evdev::has_property(e, evdev::INPUT_PROP_ACCELEROMETER)) {
+				continue;
+			};
+
+			const product = evdev::get_id_product(e);
 			for (let i = 0z; i < candidate.preference; i += 1) {
-				if (strings::compare(name, preferences[i]) == 0) {
+				if (product == preferences[i]) {
+					if (has_candidate) {
+						evdev::destroy(candidate.dev as evdev::libevdev);
+						io::close(candidate.fd)!;
+					};
 					has_candidate = true;
-					eligible = true;
+					taken = true;
 					candidate.fd = f;
 					candidate.dev = e;
 					candidate.preference = i;
 					break;
 				};
-			};
-
-			if (!eligible) {
-				evdev::destroy(e);
-				io::close(f)!;
 			};
 		};
 		fs::finish(iter);

@@ -22,4 +22,11 @@ def READ_RY: u8	= 1 << 4;
 def READ_RZ: u8	= 1 << 5;
 def READ_FULL: u8	 = (1 << 6) - 1;
 
+def USB_VENDOR_ID_NINTENDO: int = 0x057e;
+
+def USB_DEVICE_ID_NINTENTO_PROCON: int		= 0x2009;
+def USB_DEVICE_ID_NINTENTO_CHRGGRIP: int	= 0x200e;
+def USB_DEVICE_ID_NINTENTO_JOYCONL: int		= 0x2006;
+def USB_DEVICE_ID_NINTENTO_JOYCONR: int		= 0x2007;
+
 export type joycon = *joycon_impl;

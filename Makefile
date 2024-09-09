@@ -1,4 +1,4 @@
-SENSORS ?= gy801
+SENSORS ?= joycon
 SENSORS_LIBS =
 HEADERS_PREFIX ?= /usr/include
 BINARIES = event-codes evdev-dump-events uinput-pointer sensors-dump pointerd pointerc motion-control buttonc

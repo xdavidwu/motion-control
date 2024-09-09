@@ -1,7 +1,7 @@
 SENSORS ?= joycon
 SENSORS_LIBS =
 HEADERS_PREFIX ?= /usr/include
-BINARIES = event-codes evdev-dump-events uinput-pointer sensors-dump pointerd pointerc motion-control buttonc
+BINARIES = event-codes evdev-dump-events uinput-pointer sensors-dump pointerd pointerc motion-control buttonc squats
 
 ifeq ($(SENSORS), joycon)
 	SENSORS_LIBS = -levdev
@@ -23,7 +23,7 @@ buttonc pointerc:
 	hare build -o $@ tools/$@/
 pointerd: evdev/codes.ha
 	hare build -levdev -o $@ cmd/$@/
-motion-control:
+motion-control squats:
 	hare build $(SENSORS_LIBS) -T +$(SENSORS) -o $@ cmd/$@/
 
 clean:

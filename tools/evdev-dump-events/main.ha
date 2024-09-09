@@ -10,7 +10,7 @@ export fn main() void = {
 	if (len(os::args) != 2) {
 		fmt::fatalf("Usage: {} DEVICE", os::args[0]);
 	};
-	const file = match (os::open(os::args[1], fs::flags::RDONLY | fs::flags::NONBLOCK)) {
+	const file = match (os::open(os::args[1], fs::flag::RDONLY | fs::flag::NONBLOCK)) {
 	case let file: io::file =>
 		yield file;
 	case let err: fs::error =>

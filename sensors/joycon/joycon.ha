@@ -23,21 +23,16 @@ export fn new(dev: (io::file | void)) (joycon | errors::error) = {
 		const iter = fs::iter(fs, ".")!;
 		let candidate = struct {
 			fd: io::file = 0,
-			dev: evdev::libevdev = 0: uintptr,
+			dev: (evdev::libevdev | void) = void,
 			preference: size = len(preferences),
 		};
 		let has_candidate = false;
 
-		for (true) {
-			const ent = match (fs::next(iter)) {
-			case let e: fs::dirent =>
-				if (!fs::ischdev(e.ftype)) {
-					continue;
-				};
-				yield e.name;
-			case void =>
-				break;
+		for (const e => fs::next(iter)!) {
+			if (!fs::ischdev(e.ftype)) {
+				continue;
 			};
+			const ent = e.name;
 			const f = match (fs::open_file(fs, ent)) {
 			case let f: io::file =>
 				yield f;
@@ -74,7 +69,7 @@ export fn new(dev: (io::file | void)) (joycon | errors::error) = {
 		fmt::printfln("Picking {}", preferences[candidate.preference])!;
 		return alloc(joycon_impl {
 			fd = candidate.fd,
-			dev = candidate.dev,
+			dev = candidate.dev as evdev::libevdev,
 			...
 		});
 	};
@@ -136,11 +131,14 @@ export fn next_sample(joycon: joycon) (sample | errors::error) = {
 				joycon.read |= READ_RZ;
 				joycon.state.gyroscope.2 =
 					-ev.value: f64 * GYRO_SCALE;
+			case =>
+				void;
 			};
 		case evdev::EV_MSC =>
 			assert(ev.code == evdev::MSC_TIMESTAMP);
 			joycon.state.timestamp = ev.value: u32;
+		case =>
+			void;
 		};
 	};
-	abort("Unreachable");
 };

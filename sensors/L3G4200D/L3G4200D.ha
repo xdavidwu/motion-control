@@ -10,7 +10,7 @@ use rt;
 export fn new(bus: int) (L3G4200D | fs::error | errors::error) = {
 	const path = fmt::asprintf("/dev/i2c-{}", bus);
 	defer free(path);
-	const file = os::open(path, fs::flags::RDONLY)?;
+	const file = os::open(path, fs::flag::RDONLY)?;
 	match (rt::ioctl(file, i2c::I2C_SLAVE, 0x69)) {
 	case let e: rt::errno =>
 		return errors::errno(e);

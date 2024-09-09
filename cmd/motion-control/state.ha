@@ -10,11 +10,11 @@ type state = enum u8 {
 
 let global_state: state	= state::NORMAL;
 
-fn sigint(sig: int, info: *signal::siginfo, ucontext: *void) void = {
+fn sigint(sig: signal::sig, info: *signal::siginfo, ucontext: *opaque) void = {
 	global_state = state::EXIT;
 };
 
-fn sigusr1(sig: int, info: *signal::siginfo, ucontext: *void) void = {
+fn sigusr1(sig: signal::sig, info: *signal::siginfo, ucontext: *opaque) void = {
 	switch (global_state) {
 	case state::NORMAL =>
 		fmt::println("Block")!;

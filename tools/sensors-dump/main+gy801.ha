@@ -16,7 +16,7 @@ use unix::signal;
 
 let exit: bool	= false;
 
-fn sigint(sig: int, info: *signal::siginfo, ucontext: *void) void = {
+fn sigint(sig: signal::sig, info: *signal::siginfo, ucontext: *opaque) void = {
 	exit = true;
 };
 
@@ -57,7 +57,7 @@ export fn main() void = {
 	const fd = timerfd::new(time::clock::MONOTONIC, 0)!;
 	defer io::close(fd)!;
 	timerfd::set(fd, (10 * time::MILLISECOND): timerfd::interval, 0)!;
-	signal::handle(signal::SIGINT, &sigint, signal::flag::RESTART);
+	signal::handle(signal::sig::INT, &sigint, signal::flag::RESTART);
 	const integrator = integration::new();
 
 	timerfd::read(fd)!;

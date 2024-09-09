@@ -1,6 +1,6 @@
 use rt;
 
-export type libevdev = *void;
+export type libevdev = *opaque;
 
 export type input_event = struct {
 	time:	rt::timeval,

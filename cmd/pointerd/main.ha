@@ -12,7 +12,7 @@ use unix::signal;
 
 let exit: bool	= false;
 
-fn sigint(sig: int, info: *signal::siginfo, ucontext: *void) void = {
+fn sigint(sig: signal::sig, info: *signal::siginfo, ucontext: *opaque) void = {
 	exit = true;
 };
 
@@ -57,7 +57,7 @@ export fn main() void = {
 	};
 	defer net::close(sock)!;
 
-	signal::handle(signal::SIGINT, &sigint);
+	signal::handle(signal::sig::INT, &sigint);
 	let buf = control::request {...};
 	for (true) {
 		const sz = match (udp::recvfrom(sock, buf.bytes, null, null)) {

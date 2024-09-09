@@ -24,13 +24,13 @@ export fn main() int = {
 	const cmd = getopt::parse(os::args, help...);
 	defer getopt::finish(&cmd);
 	if (len(cmd.args) != 1) {
-		getopt::printusage(os::stderr, os::args[0], help);
+		getopt::printusage(os::stderr, os::args[0], help)!;
 		os::exit(-1);
 	};
 
 	const buf = control::request {
 		code = control::code::RELATIVE_MOVEMENT,
-		...,
+		...
 	};
 
 	const sock = match (dial::dial("udp", cmd.args[0], strconv::u16tos(control::DEFAULT_PORT))) {
@@ -47,7 +47,7 @@ export fn main() int = {
 	const joycon = joycon::new(void)!;
 	defer joycon::destroy(joycon);
 
-	const joycon_epoll = rt::epoll_event {
+	let joycon_epoll = rt::epoll_event {
 		events = rt::EPOLLIN,
 		data = rt::epoll_data {
 			fd = joycon.fd,
@@ -55,10 +55,10 @@ export fn main() int = {
 	};
 	rt::epoll_ctl(epoll, rt::EPOLL_CTL_ADD, joycon.fd, &joycon_epoll)!;
 
-	const fd = timerfd::new(time::clock::MONOTONIC, rt::O_NONBLOCK)!;
+	const fd = timerfd::new(time::clock::MONOTONIC, timerfd::new_flag::NONBLOCK)!;
 	defer io::close(fd)!;
 	timerfd::set(fd, (10 * time::MILLISECOND): timerfd::interval, 0)!;
-	const timer_epoll = rt::epoll_event {
+	let timer_epoll = rt::epoll_event {
 		events = rt::EPOLLIN | rt::EPOLLET,
 		data = rt::epoll_data {
 			fd = fd,
@@ -66,15 +66,15 @@ export fn main() int = {
 	};
 	rt::epoll_ctl(epoll, rt::EPOLL_CTL_ADD, fd, &timer_epoll)!;
 
-	signal::handle(signal::SIGINT, &sigint, signal::flag::RESTART);
-	signal::handle(signal::SIGUSR1, &sigusr1, signal::flag::RESTART);
+	signal::handle(signal::sig::INT, &sigint, signal::flag::RESTART);
+	signal::handle(signal::sig::USR1, &sigusr1, signal::flag::RESTART);
 
 	const sample = joycon::next_sample(joycon)!;
 	let prev_us = sample.timestamp;
 
 	let complementary = complementary::new(sample.accelerometer, 0.02);
 
-	let e = rt::epoll_event {...};
+	let e = rt::epoll_event { data = rt::epoll_data { ... }, ...};
 	for (global_state != state::EXIT) {
 		match (rt::epoll_wait(epoll, &e, 1, -1)) {
 		case let e: rt::errno =>

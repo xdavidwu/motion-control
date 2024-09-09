@@ -10,7 +10,7 @@ use unix::signal;
 
 let exit: bool	= false;
 
-fn sigint(sig: int, info: *signal::siginfo, ucontext: *void) void = {
+fn sigint(sig: signal::sig, info: *signal::siginfo, ucontext: *opaque) void = {
 	exit = true;
 };
 
@@ -18,7 +18,7 @@ export fn main() void = {
 	const joycon = joycon::new(void)!;
 	defer joycon::destroy(joycon);
 
-	signal::handle(signal::SIGINT, &sigint, signal::flag::RESTART);
+	signal::handle(signal::sig::INT, &sigint, signal::flag::RESTART);
 
 	const sample = joycon::next_sample(joycon)!;
 	let prev_us = sample.timestamp;

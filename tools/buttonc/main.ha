@@ -9,6 +9,7 @@ use os::exec;
 use proto::control;
 use strconv;
 use unix::tty;
+use unix::signal;
 
 fn send(sock: net::socket, bytes: []u8) void = {
 	match (udp::send(sock, bytes)) {
@@ -19,7 +20,7 @@ fn send(sock: net::socket, bytes: []u8) void = {
 	};
 };
 
-export fn main() int = {
+export fn main() void = {
 	const help: []getopt::help = [
 		"control pointerd with buttons",
 		('m', "pid", "motion-control pid, for attitude reset key combo"),
@@ -39,11 +40,13 @@ export fn main() int = {
 			case =>
 				fmt::fatalf("Invalid pid {}", opt.1);
 			};
+		case =>
+			abort();
 		};
 	};
 
 	if (len(cmd.args) != 1) {
-		getopt::printusage(os::stderr, os::args[0], help);
+		getopt::printusage(os::stderr, os::args[0], help)!;
 		os::exit(-1);
 	};
 
@@ -64,20 +67,14 @@ export fn main() int = {
 		termios = &tty::termios_query(os::stdin_file)!;
 		tty::makeraw(termios)!;
 	};
-	if (tty) defer tty::termios_restore(termios);
+	defer if (tty) {
+		tty::termios_restore(termios);
+	};
 
 	let left = false, right = false;
 	let motion_blocked = false;
-	for (true) {
-		let i: []u8 = [0];
-		match (io::read(os::stdin_file, i)) {
-		case size =>
-			yield;
-		case io::EOF =>
-			break;
-		case let err: io::error =>
-			fmt::fatalf("Cannot read(): {}", io::strerror(err));
-		};
+	let i: []u8 = [0];
+	for (const sz => io::read(os::stdin_file, i)!) {
 		switch (i[0]) {
 		case 'A' =>
 			buf.code = control::code::KEY_PRESSED;
@@ -101,15 +98,15 @@ export fn main() int = {
 			send(sock, buf.bytes);
 		case 4 => // EOT
 			break;
+		case =>
+			abort();
 		};
 		if (motion_pid != 0) {
 			if ((!motion_blocked && left && right) ||
 					(motion_blocked && (!left || !right))) {
-				exec::kill(motion_pid, exec::signal::SIGUSR1)!;
+				exec::sig(motion_pid, signal::sig::USR1)!;
 				motion_blocked = !motion_blocked;
 			};
 		};
 	};
-
-	return 0;
 };

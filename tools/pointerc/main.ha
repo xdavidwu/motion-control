@@ -17,7 +17,7 @@ fn send(sock: net::socket, bytes: []u8) void = {
 	};
 };
 
-export fn main() int = {
+export fn main() void = {
 	if (len(os::args) > 4 || len(os::args) < 3) {
 		fmt::fatalf("Usage: {} address (x y | left | right)", os::args[0]);
 	};
@@ -60,5 +60,4 @@ export fn main() int = {
 		};
 		send(sock, buf.bytes);
 	};
-	return 0;
 };

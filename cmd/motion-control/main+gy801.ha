@@ -17,7 +17,7 @@ use strconv;
 use time;
 use unix::signal;
 
-export fn main() int = {
+export fn main() void = {
 	const help: []getopt::help = [
 		"control pointerd with motion",
 		"bus address",
@@ -25,7 +25,7 @@ export fn main() int = {
 	const cmd = getopt::parse(os::args, help...);
 	defer getopt::finish(&cmd);
 	if (len(cmd.args) != 2) {
-		getopt::printusage(os::stderr, os::args[0], help);
+		getopt::printusage(os::stderr, os::args[0], help)!;
 		os::exit(-1);
 	};
 	const bus = match (strconv::stoi(cmd.args[0])) {
@@ -37,7 +37,7 @@ export fn main() int = {
 
 	const buf = control::request {
 		code = control::code::RELATIVE_MOVEMENT,
-		...,
+		...
 	};
 
 	const sock = match (dial::dial("udp", cmd.args[1], strconv::u16tos(control::DEFAULT_PORT))) {
@@ -74,8 +74,8 @@ export fn main() int = {
 	const fd = timerfd::new(time::clock::MONOTONIC, 0)!;
 	defer io::close(fd)!;
 	timerfd::set(fd, (10 * time::MILLISECOND): timerfd::interval, 0)!;
-	signal::handle(signal::SIGINT, &sigint, signal::flag::RESTART);
-	signal::handle(signal::SIGUSR1, &sigusr1, signal::flag::RESTART);
+	signal::handle(signal::sig::INT, &sigint, signal::flag::RESTART);
+	signal::handle(signal::sig::USR1, &sigusr1, signal::flag::RESTART);
 
 	timerfd::read(fd)!;
 	const acc_readings = ADXL345::read(ADXL345)!;
@@ -113,6 +113,4 @@ export fn main() int = {
 			break;
 		};
 	};
-
-	return 0;
 };

@@ -7,6 +7,9 @@ ifeq ($(SENSORS), joycon)
 	SENSORS_LIBS = -levdev
 endif
 
+.PHONY: $(BINARIES)
+all: $(BINARIES)
+
 event-codes:
 	hare build -o $@ aux/$@/
 evdev/codes.ha: event-codes
@@ -22,7 +25,6 @@ pointerd: evdev/codes.ha
 	hare build -levdev -o $@ cmd/$@/
 motion-control:
 	hare build $(SENSORS_LIBS) -T +$(SENSORS) -o $@ cmd/$@/
-.PHONY: $(BINARIES)
-all: $(BINARIES)
+
 clean:
 	rm -f event-codes evdev/codes.ha $(BINARIES)

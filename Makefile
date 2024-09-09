@@ -1,7 +1,7 @@
 SENSORS ?= gy801
 SENSORS_LIBS =
 HEADERS_PREFIX ?= /usr/include
-BINARIES = evdev-dump-events uinput-pointer sensors-dump pointerd pointerc motion-control buttonc
+BINARIES = event-codes evdev-dump-events uinput-pointer sensors-dump pointerd pointerc motion-control buttonc
 
 ifeq ($(SENSORS), joycon)
 	SENSORS_LIBS = -levdev

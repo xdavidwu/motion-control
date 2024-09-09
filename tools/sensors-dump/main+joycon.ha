@@ -7,6 +7,8 @@ use fmt;
 use math;
 use sensors::joycon;
 use unix::signal;
+use unix::tty;
+use os;
 
 let exit: bool	= false;
 
@@ -28,6 +30,7 @@ export fn main() void = {
 	const integrator = integration::new();
 	const tilt = tilt::new(acc_readings);
 	const complementary = complementary::new(acc_readings, 0.02);
+	const screen = tty::isatty(os::stdout_file);
 
 	for (let i = 0; !exit; i += 1) {
 		const sample = joycon::next_sample(joycon)!;
@@ -46,20 +49,23 @@ export fn main() void = {
 			let attitude = integration::read_euler(integrator);
 			let tilt_attitude = tilt::estimate_euler(tilt, acc_readings);
 			let complementary_attitude = complementary::read_euler(complementary);
+			if (screen) {
+				fmt::print("\x1b[1;1H\x1b[0J")!;
+			};
 
-			fmt::printfln("Accelerometer: {} {} {} g",
+			fmt::printfln("Accelerometer:\t{}\t{}\t{}\tg",
 				acc_readings.0, acc_readings.1, acc_readings.2)!;
-			fmt::printfln("Gyroscope: {} {} {} dps",
+			fmt::printfln("Gyroscope:\t{}\t{}\t{}\tdps",
 				gyro_readings.0, gyro_readings.1, gyro_readings.2)!;
-			fmt::printfln("Attitude: {} {} {} deg",
+			fmt::printfln("Attitude:\t{}\t{}\t{}\tdeg",
 				attitude.0 / math::PI * 180.0,
 				attitude.1 / math::PI * 180.0,
 				attitude.2 / math::PI * 180.0)!;
-			fmt::printfln("Attitude (tilt): {} {} {} deg",
+			fmt::printfln("Attitude (tilt):\t{}\t{}\t{}\tdeg",
 				tilt_attitude.0 / math::PI * 180.0,
 				tilt_attitude.1 / math::PI * 180.0,
 				tilt_attitude.2 / math::PI * 180.0)!;
-			fmt::printfln("Attitude (complementary): {} {} {} deg",
+			fmt::printfln("Attitude (complementary):\t{}\t{}\t{}\tdeg",
 				complementary_attitude.0 / math::PI * 180.0,
 				complementary_attitude.1 / math::PI * 180.0,
 				complementary_attitude.2 / math::PI * 180.0)!;

@@ -23,6 +23,10 @@ export fn set_name(dev: libevdev, name: str) void = {
 	c_libevdev_set_name(dev, cstr);
 };
 
+export fn has_property(dev: libevdev, prop: uint) bool = {
+	return c_libevdev_has_property(dev, prop) == 1;
+};
+
 export fn next_event(dev: libevdev, flags: uint, ev: *input_event) (errors::error | read_status) = {
 	const r = c_libevdev_next_event(dev, flags, ev);
 	if (r < 0) {
@@ -61,9 +65,13 @@ export fn event_code_get_name(_type: u16, code: u16) (const str | errors::invali
 export @symbol("libevdev_new") fn new() libevdev;
 export @symbol("libevdev_free") fn destroy(dev: libevdev) void;
 
+export @symbol("libevdev_get_id_product") fn get_id_product(dev: libevdev) int;
+export @symbol("libevdev_get_id_vendor") fn get_id_vendor(dev: libevdev) int;
+
 @symbol("libevdev_new_from_fd") fn c_libevdev_new_from_fd(fd: int, dev: *libevdev) int;
 @symbol("libevdev_get_name") fn c_libevdev_get_name(dev: libevdev) *const c::char;
 @symbol("libevdev_set_name") fn c_libevdev_set_name(dev: libevdev, name: *const c::char) void;
+@symbol("libevdev_has_property") fn c_libevdev_has_property(dev: libevdev, prop: uint) int;
 @symbol("libevdev_next_event") fn c_libevdev_next_event(dev: libevdev,
 	flags: uint, ev: *input_event) int;
 @symbol("libevdev_enable_event_type") fn c_libevdev_enable_event_type(

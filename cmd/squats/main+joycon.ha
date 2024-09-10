@@ -1,3 +1,4 @@
+use bufio;
 use errors;
 use fmt;
 use sensors::joycon;
@@ -55,11 +56,17 @@ export fn main() void = {
 				count += 1;
 			};
 
-			fmt::println(switch (s) {
+			fmt::print(switch (s) {
 			case status::UP => yield 'U';
 			case status::DOWN => yield 'D';
 			case status::IDLE => yield 'X';
 			}, count / 2)!;
+
+			if (screen) {
+				bufio::flush(os::stdout)!;
+			} else {
+				fmt::println()!;
+			};
 
 		};
 	};

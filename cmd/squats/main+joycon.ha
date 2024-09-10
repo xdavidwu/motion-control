@@ -19,7 +19,7 @@ type status = enum u8 {
 	IDLE,
 };
 
-def THRESHOLD: f64 = 10.0;
+def THRESHOLD: f64 = 20.0;
 
 export fn main() void = {
 	const joycon = joycon::new(void)!;
